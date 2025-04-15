@@ -1,4 +1,7 @@
-from sqlalchemy import select, and_
+from fastapi import HTTPException
+
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy import select, and_,func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.db import async_session_fuctory
@@ -28,13 +31,21 @@ class AsyncOrmTables:
     async def delete_table(id: int):
         del_item = None
         async with async_session_fuctory() as session:
-            table = await session.get(TablesOrm, id)
-            if table:
+            try:
+                table = await session.get(TablesOrm, id)
+                if not table:
+                    raise HTTPException(status_code=404, detail="No tables found to delete")
                 del_item = table
                 await session.delete(table)
                 await session.commit()
+            except IntegrityError:
+                await session.rollback()
+                del_item = None
+                raise HTTPException(
+                    status_code=400,
+                    detail="The table cannot be removed because it has reservations"
+                )
         return del_item
-
 
 
 class AsyncOrmReservation:
@@ -47,10 +58,10 @@ class AsyncOrmReservation:
     @staticmethod
     async def __search_overlap(session: AsyncSession, start_time: datetime, end_time: datetime, table_id: int):
         query = select(ReservationOrm).filter(
-            ReservationOrm.id == table_id,
+            ReservationOrm.table_id == table_id,
             and_(
                 ReservationOrm.reservation_time < end_time,
-                ReservationOrm.reservation_time + timedelta(minutes=ReservationOrm.duration_minutes) > start_time
+                ReservationOrm.reservation_time + func.make_interval(0, 0, 0, 0, 0, ReservationOrm.duration_minutes) > start_time
             )
         )
         result = await session.execute(query)
@@ -95,15 +106,3 @@ class AsyncOrmReservation:
                 await session.delete(reservation)
                 await session.commit()
         return del_item
-
-# from fastapi import APIRouter, Depends
-# from typing import List
-
-# router = APIRouter()
-
-# @router.get("/tables", response_model=List[TableSchema])
-# async def get_all_tables():
-#     async with async_session_fuctory() as session:
-#         result = await session.execute(select(TablesOrm))
-#         tables = result.scalars().all()
-#         return tables
