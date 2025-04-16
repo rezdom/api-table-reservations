@@ -14,14 +14,17 @@ async def get_reservations():
 
 @reservation_router.post("/reservations/", tags=["Reservation"], summary="create reservation", response_model=ResponseReservationSchema)
 async def post_reservation(new_reser: InsertReservationSchema):
-    result = await AsyncOrmReservation.insert_reservation(
-        new_reser.customer_name,
-        new_reser.table_id,
-        new_reser.reservation_time,
-        new_reser.duration_minutes
-    )
-    if result: return result
-    raise HTTPException(status_code=400, detail="overlapping time")
+    try:
+        result = await AsyncOrmReservation.insert_reservation(
+            new_reser.customer_name,
+            new_reser.table_id,
+            new_reser.reservation_time,
+            new_reser.duration_minutes
+        )
+        if result: return result
+    except HTTPException as e:
+        raise e
+    
 
 @reservation_router.delete("/reservations/{id}", tags=["Reservation"], summary="delete reservation", response_model=ResponseReservationSchema)
 async def delete_reservation(del_id: int):

@@ -94,6 +94,8 @@ class AsyncOrmReservation:
                     await session.commit()
                     await session.refresh(new_reservation)
                     result = new_reservation
+                else: raise HTTPException(status_code=400, detail="overlapping time")
+            else: raise HTTPException(status_code=404, detail="table does not exist")
             return result
 
     @staticmethod

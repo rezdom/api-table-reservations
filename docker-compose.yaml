@@ -1,0 +1,24 @@
+services:
+  postgres:
+    image: postgres:13
+    container_name: postgres_table_reserv
+    environment:
+        POSTGRES_USER: ${DB_USER}
+        POSTGRES_PASSWORD: ${DB_PASS}
+        POSTGRES_DB: ${DB_NAME}
+    ports:
+      - 1234:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  
+  fastapi_app:
+    build: .
+    container_name: fastapi_app_table_reserv
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - 8001:8000

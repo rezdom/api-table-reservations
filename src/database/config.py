@@ -9,7 +9,6 @@ class Settings(BaseSettings):
 
     @property
     def asybc_get_db_url(self):
-        #postgresql+asyncpg://postgres:Pablo1305@localhost:5432/test
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
     
     model_config = SettingsConfigDict(env_file=".env")
