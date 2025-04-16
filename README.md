@@ -44,7 +44,7 @@ Built using **FastAPI**, **PostgreSQL**, and **SQLAlchemy**, and fully container
 - Python 3.12+
 - FastAPI
 - PostgreSQL
-- SQLAlchemy / SQLModel
+- SQLAlchemy
 - Alembic
 - Docker & docker-compose
 
